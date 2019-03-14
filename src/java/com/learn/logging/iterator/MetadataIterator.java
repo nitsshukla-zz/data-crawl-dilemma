@@ -6,6 +6,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.ListIterator;
 
@@ -101,5 +102,24 @@ public class MetadataIterator implements Iterator<TableMetadata>, Cloneable {
 		}
 		return null;
 	}
-
+	public int getSize(MetadataIterator iterator) {
+		int size = 0;
+		while(iterator.hasNext()){
+			iterator.next();
+			++size;
+		}
+		return size;
+	}
+	public static <T> Iterable<T> 
+    getIterableFromIterator(Iterator<T> iterator) 
+    { 
+        return new Iterable<T>() { 
+            @Override
+            public Iterator<T> iterator() 
+            { 
+                return iterator; 
+            } 
+        }; 
+    } 
+	
 }

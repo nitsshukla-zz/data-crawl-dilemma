@@ -1,48 +1,45 @@
 package com.learn.logging.optimised;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-
-public class GenerateMetadata {
-	static Connection conn;
-
-	 public static void setConnection() {
-		try {
-			String url = "jdbc:mysql://localhost:3306/archonbig";
-			String user = "root";
-			String password = "secret";
-			Class.forName("com.mysql.jdbc.Driver");
-			conn = DriverManager.getConnection(url, user, password);
-
-//			Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
-//	        conn = DriverManager.getConnection("jdbc:sqlserver://34.213.4.182:57997;databaseName=PS_FINANCE", "sa", "secret@P3");
-			
-	}catch (Exception e) {
-		e.printStackTrace();
+public class GenerateMetadata extends Thread {
+	 Connection conn;
+	 boolean allMetadataThreadsFinished =false;
+//	 public static int threadCount = 0;
+//
+//		public synchronized static void setThreadCount(int value) {
+//			threadCount += value;
+//		}
+	public GenerateMetadata(Connection conn) throws ClassNotFoundException, SQLException {
+		this.conn = conn;
 	}
-}		
-	public static void main(String[] args) {
+	public void run(){
+		System.out.println("job started");
 		Instant start = Instant.now();
 		ArrayList<Thread> threads = new ArrayList<>();
+		String schema = "";
 		try {
-			setConnection();
-			ResultSet rst = conn.getMetaData().getTables(null, null, "%", null);
-			System.out.println("Connection : "+conn);
+			ResultSet rst = conn.getMetaData().getTables(null, schema, "%", new String[] { "TABLE" });
+			System.out.println("no of tables rs "+rst);
 			int tnum=0;
 			while (rst.next()) {
 				tnum++;
 			}
 			System.out.println("No of tables = "+tnum);
-			int nThreads = 5; int listSize = 15;
-//			int nThreads = 3; int listSize = 10;
-//			int nThreads = 9; int listSize = 10000;
-
-
-			rst = conn.getMetaData().getTables(null, null, "%", null);
+			int f = tnum/10;
+			int listSize = (int) Math.pow(10, Integer.toString(f).length());
+			if(listSize==tnum)
+				listSize /= 10;
+			int nThreads = tnum/listSize;
+			if(tnum%listSize>0)
+				nThreads++;
+			System.out.println("listSize = "+listSize+" nThreads = "+nThreads);
+			
+			rst = conn.getMetaData().getTables(null, schema, "%", null);
 			List<List<String>> lists = new ArrayList<List<String>>();
 			
 			RunClass th[] = new RunClass[nThreads];
@@ -57,23 +54,21 @@ public class GenerateMetadata {
 				}
 				lists.add(i, innerList);
 			}
+			rst.close();
 			for(int i = 0 ;i<nThreads;i++) {
 				th[i] = new RunClass(conn, lists.get(i), i);
 				th[i].start();
-				threads.add(th[i]);
+				threads.add(th[i]); 
 			}
-
-			for(Thread t : threads) {
-				t.join();
+			for(Thread t : threads) { 
+				t.join(); 
 			}
-			
-			
-		}catch (Exception e) {
+			allMetadataThreadsFinished = true;
+			System.out.println("All threads finished");
+		}catch (Throwable e) {
 			e.printStackTrace();
 		}
-
 		Duration timeElapsed = Duration.between(start, Instant.now());
-		System.out.println("timeElapsed "+timeElapsed);
-
+		System.out.println("timeElapsed in metadata creation "+timeElapsed);
 	}
 }

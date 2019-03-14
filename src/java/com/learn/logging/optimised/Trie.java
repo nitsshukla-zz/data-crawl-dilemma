@@ -1,40 +1,41 @@
 package com.learn.logging.optimised;
 
-class Trie {
+public class Trie {
 	private TrieNode root;
 
 	public Trie() {
-		root = new TrieNode(' ');
+		root = new TrieNode();
 	}
 
 	public void insert(String word) {
-		if (search(word) == true)
-			return;
-		TrieNode current = root;
-		for (char ch : word.toCharArray()) {
-			TrieNode child = current.subNode(ch);
-			if (child != null)
-				current = child;
-			else {
-				current.childList.add(new TrieNode(ch));
-				current = current.subNode(ch);
+		TrieNode root = this.root;
+		for (int i = 0; i < word.length(); i++) {
+			char c = word.charAt(i);
+			if (root.map.containsKey(c)) {
+				root = root.map.get(c);
+			} else {
+				TrieNode n = new TrieNode();
+				root.map.put(c, n);
+				root = n;
 			}
-			current.count++;
 		}
-		
-		current.isEnd = true;
+		root.isWordTerminated = true;
 	}
 
 	public boolean search(String word) {
-		TrieNode current = root;
-		for (char ch : word.toCharArray()) {
-			if (current.subNode(ch) == null)
+		TrieNode root = this.root;
+		for (int i = 0; i < word.length(); i++) {
+			char c = word.charAt(i);
+			if (root.map.containsKey(c)) {
+				root = root.map.get(c);
+			} else
 				return false;
-			else
-				current = current.subNode(ch);
 		}
-		if (current.isEnd == true)
-			return true;
-		return false;
+		return root.isWordTerminated;
+	}
+
+	public void destroy() {
+		root.map.clear();
+		root = null;
 	}
 }
