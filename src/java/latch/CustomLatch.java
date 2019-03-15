@@ -1,9 +1,11 @@
 package latch;
 
+import java.util.concurrent.atomic.*;
+
 import com.learn.logging.optimised.Trie;
 
 public class CustomLatch {
-	int threadCount;
+	AtomicInteger threadCount;
 	Trie trie;
 
 	public void init(Trie trie) {
@@ -18,7 +20,7 @@ public class CustomLatch {
 	}
 	public void readyToFinish() throws InterruptedException {
 		while(threadCount!=0) {
-			Thread.sleep(50);
+			Thread.sleep(5000);
 			}
 			executeOnFinish();
 	}
